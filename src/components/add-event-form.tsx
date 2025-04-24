@@ -27,8 +27,9 @@ import { toast } from "sonner";
 import { CalendarIcon } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 import { Input } from "@/components/ui/input"; // Needed for summary input
-import axios from "axios";
-import { BACKEND_URL } from "@/constants";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { addEvent } from "@/http";
+
 
 const FormSchema = z.object({
   summary: z.string().min(1, "Summary is required."),
@@ -40,6 +41,19 @@ export function DateTimePickerForm() {
     resolver: zodResolver(FormSchema),
     defaultValues: {
       summary: "",
+    },
+  });
+
+  const queryClient = useQueryClient()
+
+  const { mutate: addEventApi } = useMutation({
+    mutationFn: addEvent,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] })
+      toast.success("event created successfully");
+    },
+    onError: () => {
+      toast.error("event not created");
     },
   });
 
@@ -59,16 +73,7 @@ export function DateTimePickerForm() {
       },
     };
 
-    // Replace this with your API call
-    console.log("Event to send:", event);
-    axios.post(`${BACKEND_URL}/event`,event,{
-      withCredentials:true
-    }).then((data)=>{
-      console.log("EVENT ADDED AND DATA IS :",data);
-    }).catch((err)=>{
-      console.log("error during adding data is :",err);
-    });
-    toast.success("Event ready to send!");
+    addEventApi(event);
   }
 
   function handleDateSelect(date: Date | undefined) {
@@ -226,9 +231,7 @@ export function DateTimePickerForm() {
                                       : "ghost"
                                   }
                                   className="sm:w-full shrink-0 aspect-square"
-                                  onClick={() =>
-                                    handleTimeChange("ampm", ampm)
-                                  }
+                                  onClick={() => handleTimeChange("ampm", ampm)}
                                 >
                                   {ampm}
                                 </Button>

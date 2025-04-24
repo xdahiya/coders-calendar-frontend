@@ -5,28 +5,20 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
-// import data from "./data.json";
-import { useEffect, useState } from "react";
-import axios from "axios";
 import { EventsDataTable } from "@/components/events-table";
-import { BACKEND_URL } from "@/constants";
+
+import { useQuery } from "@tanstack/react-query";
+import { getAllEvents } from "@/http";
+import { Loader2 } from "lucide-react";
 
 export default function Page({ user }: { user: any }) {
-  const [events, setEvents] = useState<any>([]);
+  const { data: events, isLoading } = useQuery({
+    queryKey: ["events"],
+    queryFn: getAllEvents,
+  });
 
-  useEffect(() => {
-    axios
-      .get(`${BACKEND_URL}/events`, { withCredentials: true })
-      .then(function (response) {
-        const events = response.data;
-        setEvents(events);
-        console.log(events);
-      })
-      .catch(function (error) {
-        console.log("error:", error);
-        setEvents(false);
-      });
-  }, []);
+  console.log(events);
+
   return (
     <SidebarProvider>
       <AppSidebar user={user} variant="inset" />
@@ -39,7 +31,14 @@ export default function Page({ user }: { user: any }) {
               {/* <div className="px-4 lg:px-6">
                 <ChartAreaInteractive />
               </div> */}
-              <EventsDataTable data={events}/>
+              {isLoading ? (
+                <>
+                  <Loader2 />
+                </>
+              ) : (
+                <EventsDataTable data={events} />
+              )}
+              {/* */}
               {/* <DataTable data={data} /> */}
             </div>
           </div>

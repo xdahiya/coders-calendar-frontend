@@ -23,7 +23,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -35,6 +34,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { deleteEvent } from "@/http";
+import { toast } from "sonner";
 
 // const data: Event[] = [
 //   {
@@ -117,7 +119,7 @@ export const columns: ColumnDef<Event>[] = [
     cell: ({ row }) => {
       return (
         <div className="text-right font-medium">
-          {new Date((row.getValue("created") as any)).toLocaleString()}
+          {new Date(row.getValue("created") as any).toLocaleString()}
         </div>
       );
     },
@@ -126,7 +128,20 @@ export const columns: ColumnDef<Event>[] = [
     id: "actions",
     enableHiding: false,
     cell: ({ row }) => {
-      const payment = row.original;
+      const rowdata = row.original;
+
+      const queryClient = useQueryClient();
+
+      const { mutate: deleteEventApi } = useMutation({
+        mutationFn: deleteEvent,
+        onSuccess: () => {
+          toast.success("event deleted successfully");
+          queryClient.invalidateQueries({ queryKey: ["events"] });
+        },
+        onError: () => {
+          toast.error("event not deleted");
+        },
+      });
 
       return (
         <DropdownMenu>
@@ -139,13 +154,13 @@ export const columns: ColumnDef<Event>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(payment.id)}
+              onClick={() => {
+                console.log("p is : ", rowdata.id);
+                deleteEventApi(rowdata.id);
+              }}
             >
-              Copy payment ID
+              Delete Event
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>View customer</DropdownMenuItem>
-            <DropdownMenuItem>View payment details</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
